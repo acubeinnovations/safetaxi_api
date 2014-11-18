@@ -17,9 +17,9 @@ class Validate_app{
 
 	
 	
-	public function validate_app($app_id){
+	public function validate_app($app_id,$imei){
 
-		$strSQL = "SELECT id FROM drivers WHERE app_key = ".mysql_real_escape_string($app_id);
+		$strSQL = "SELECT id FROM drivers WHERE app_key = '".mysqli_real_escape_string($this->connection,$app_id)."' AND device_imei='".mysqli_real_escape_string($this->connection,$imei)."'";
 		$rsRES = mysqli_query($this->connection,$strSQL);
 		if ( mysqli_num_rows($rsRES) == 1 ){
 

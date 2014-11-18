@@ -16,18 +16,15 @@ class VehicleLocationLog {
 	}
 
 	
-	public function locate_taxi($trip_id)
-	{
-		$strSQL = "SELECT * FROM vehicle_locations_log";
-		$strSQL .= " WHERE id = (SELECT MAX(id) FROM vehicle_locations_log WHERE trip_id = '".mysql_real_escape_string($trip_id)."') LIMIT 1";
+	public function logLocation($app_key,$lat,$lng,$trip_id='-1') {
+
+		$strSQL = "INSERT INTO  vehicle_locations_logs (app_key,lat,lng,trip_id) VALUES (";
+		$strSQL .="'".$app_key."',";
+		$strSQL .="'".$lat."'";
+		$strSQL .="'".$lng."',";
+		$strSQL .="'".$trip_id."')";
+		$result=mysqli_query($this->connection, $strSQL);
 		
-		$rsRES = mysql_query($strSQL,$this->connection) or die(mysql_error(). $strSQL );
-		if ( mysql_num_rows($rsRES) == 1 ){
-			return mysql_fetch_assoc($rsRES);
-		}else{
-			$this->error_description = "Invalid Trip";
-			return false;
-		}
 	}
 	
 	

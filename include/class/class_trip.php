@@ -15,27 +15,33 @@ class Trip {
 		$this->connection = $db->connect();
 	}
 	
-	public function booking($dataArray = array())
-	{
+	public function finish($dataArray = array(),$id){
 		if($dataArray){
-			//new trip
-			$strSQL = "INSERT INTO trips SET ";
+			$i=0;
+			$strSQL = "UPDATE  trips SET ";
 			foreach($dataArray as $key=>$value){
-				$strSQL .= $key."='".mysql_real_escape_string($value)."',";
+				$strSQL .= $key."='".mysql_real_escape_string($value);
+				if(count($dataArray)>$i){
+				$strSQL .="',";
+				}else{
+				$strSQL .="'";
+				}
+				$i++;
 			}
-			$strSQL = substr($strSQL,0,-1);
+			$strSQL .=" WHERE id='".$id."'";
 
-			$rsRES = mysql_query($strSQL,$this->connection) or die(mysql_error(). $strSQL );
+			//$strSQL = substr($strSQL,0,-1);
+
+			$rsRES = mysqli_query($this->connection,$strSQL);
 			
 			if(mysql_affected_rows($this->connection) == 1){
-				$this->error_description = "Booking success";
-				return mysql_insert_id();
+				
+				return true;
 			}else{
-				$this->error_description = "Booking Failed";
 				return false;
 			}	
 		}else{
-			$this->error_description = "Invalid Trip details";
+			
 			return false;
 		}
 		
@@ -55,45 +61,7 @@ class Trip {
 		
 	}
 
-	public function get_booking_details_by_customer($app_id,$IMEI,$token)
-	{
-		$strSQL = "SELECT cust.name AS name,trip.*";
-		$strSQL .= " FROM trips trip,customers cust";
-		$strSQL .= " WHERE cust.app_id = '".mysql_real_escape_string($app_id)."' AND cust.imei = '".mysql_real_escape_string($IMEI)."' AND cust.token = '".mysql_real_escape_string($token)."' AND cust.id = trip.customer_id";
-		$strSQL .= " AND trip.organisation_id = ".ORG_CNC;
-		$strSQL .= " ORDER BY trip.booking_date DESC";
-		
-		$rsRES = mysql_query($strSQL,$this->connection) or die(mysql_error(). $strSQL );
-
-		$bookings = array();
-		if ( mysql_num_rows($rsRES) > 0 ){
-			while($row = mysql_fetch_assoc($rsRES)){
-				
-				$bookings[] = array(
-						'id'	=> $row['id'],
-						'name' => $row['name'],
-						'from' => array(
-								'city' => $row['pick_up_city'],
-								'area' => $row['pick_up_area'],
-								'landmark' => $row['pick_up_landmark']
-								),
-						'to' => array(
-								'city' => $row['drop_city'],
-								'area' => $row['drop_area'],
-								'landmark' => $row['drop_landmark']
-								),						
-						'date' => strtotime($row['booking_date']." ".$row['booking_time']),
-						'trip_date' => date('d-M-y h:i a',strtotime($row['pick_up_date']." ".$row['pick_up_time'])),
-						'confirmation' => $row['trip_status_id']
-						);
-			}
-			return $bookings;
-		}else{
-			$this->error_description = "Invalid Trip";
-			return false;
-		}
-
-	}
+	
 
 
 
