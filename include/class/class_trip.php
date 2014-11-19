@@ -15,13 +15,13 @@ class Trip {
 		$this->connection = $db->connect();
 	}
 	
-	public function finish($dataArray = array(),$id){
+	public function update($dataArray = array(),$id){
 		if($dataArray){
 			$i=0;
 			$strSQL = "UPDATE  trips SET ";
 			foreach($dataArray as $key=>$value){
 				$strSQL .= $key."='".mysql_real_escape_string($value);
-				if(count($dataArray)>$i){
+				if(count($dataArray)-1>$i){
 				$strSQL .="',";
 				}else{
 				$strSQL .="'";
@@ -34,7 +34,7 @@ class Trip {
 
 			$rsRES = mysqli_query($this->connection,$strSQL);
 			
-			if(mysql_affected_rows($this->connection) == 1){
+			if(mysqli_affected_rows($this->connection) == 1){
 				
 				return true;
 			}else{
@@ -47,26 +47,17 @@ class Trip {
 		
 	}
 
-	public function booking_details($id)
+	public function getDetails($id)
 	{
 		
-		$strSQL = "SELECT * FROM trips WHERE id = '".mysql_real_escape_string($id)."'";
-		$rsRES = mysql_query($strSQL,$this->connection) or die(mysql_error(). $strSQL );
-		if ( mysql_num_rows($rsRES) == 1 ){
-			return mysql_fetch_assoc($rsRES);
+		$strSQL = "SELECT * FROM trips WHERE id = '".mysqli_real_escape_string($this->connection,$id)."'";
+		$rsRES = mysqli_query($this->connection,$strSQL);
+		if ( mysqli_num_rows($rsRES) == 1 ){
+			return mysqli_fetch_assoc($rsRES);
 		}else{
-			$this->error_description = "Invalid Trip";
+			
 			return false;
 		}
 		
 	}
-
-	
-
-
-
-
-
-
 }
-?>

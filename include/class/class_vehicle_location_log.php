@@ -20,10 +20,11 @@ class VehicleLocationLog {
 
 		$strSQL = "INSERT INTO  vehicle_locations_logs (app_key,lat,lng,trip_id) VALUES (";
 		$strSQL .="'".$app_key."',";
-		$strSQL .="'".$lat."'";
+		$strSQL .="'".$lat."',";
 		$strSQL .="'".$lng."',";
 		$strSQL .="'".$trip_id."')";
 		$result=mysqli_query($this->connection, $strSQL);
+		return true;
 		
 	}
 	

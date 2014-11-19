@@ -14,10 +14,23 @@ class Driver{
 				
 				return true;
 			}else{
-				$this->error_description = "Booking Failed";
+				
 				return false;
 			}
 
+	}
+	
+	public function getDriver($app_key){
+		
+		$strSQL = "SELECT id FROM drivers WHERE app_key = '".mysqli_real_escape_string($this->connection,$app_key)."' AND  driver_status_id=".DRIVER_STATUS_ACTIVE;
+		$rsRES = mysqli_query($this->connection,$strSQL);
+		if ( mysqli_num_rows($rsRES) == 1 ){
+			return mysqli_fetch_assoc($rsRES);
+		}else{
+			
+			return false;
+		}
+		
 	}
 
 
