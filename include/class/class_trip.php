@@ -11,16 +11,16 @@ class Trip {
 
 	function __construct() {
 		require_once dirname(__FILE__) . '/class_connection.php';
-		$db = New Connection();
+		$db = new Connection();
 		$this->connection = $db->connect();
 	}
 	
 	public function update($dataArray = array(),$id){
 		if($dataArray){
 			$i=0;
-			$strSQL = "UPDATE  trips SET ";
+			$strSQL = "UPDATE trips SET ";
 			foreach($dataArray as $key=>$value){
-				$strSQL .= $key."='".mysql_real_escape_string($value);
+				$strSQL .= $key."='".$value;
 				if(count($dataArray)-1>$i){
 				$strSQL .="',";
 				}else{

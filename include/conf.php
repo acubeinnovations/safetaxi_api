@@ -3,7 +3,7 @@
 if ( !defined('CHECK_INCLUDED') ){
     exit();
 }
-
+date_default_timezone_set('Asia/Kolkata');
 // Mysql Configuration Constants
 
 define('MYSQL_USERNAME', 'root');
@@ -23,6 +23,14 @@ define('TRIP_NOTIFICATION_REJECTED', 0);
 define('TRIP_NOTIFICATION_ACCEPTED', 1);
 define('TRIP_NOTIFICATION_TIME_OUT', 2);
 
+define('TRIP_ERROR',0);
+define('TRIP_AWARDED', 1);
+define('TRIP_REGRET', 2);
+define('TRIP_REJECTED', 3);
+define('TRIP_TIME_OUT', 4);
+
+define('NO_ERROR',0);
+define('ERROR',1);
 
 define('TRIP_STATUS_BOOKED', 1);
 define('TRIP_STATUS_ACCEPTED', 2);
@@ -37,8 +45,8 @@ define('FUTURE_TRIP', 2);
 
 define('DRIVER_STATUS_ACTIVE', 1);
 define('DRIVER_STATUS_ENGAGED', 2);
-define('DRIVER_STATUS_SUSPENDED', 3);
-define('DRIVER_STATUS_DISMISSED', 4);
+define('DRIVER_STATUS_DISMISSED', 3);
+define('DRIVER_STATUS_SUSPENDED', 4);
 
 define('NOTIFICATION_TYPE_NEW_TRIP', 1);
 define('NOTIFICATION_TYPE_TRIP_CANCELLED', 2);

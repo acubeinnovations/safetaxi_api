@@ -11,7 +11,7 @@ class VehicleLocationLog {
 
 	function __construct() {
 		require_once dirname(__FILE__) . '/class_connection.php';
-		$db = New Connection();
+		$db = new Connection();
 		$this->connection = $db->connect();
 	}
 

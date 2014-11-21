@@ -1,5 +1,5 @@
 <?php 
-	error_reporting(0);
+	//error_reporting(0);
 define('CHECK_INCLUDED', true);
 
 require_once 'include/conf.php';
@@ -13,46 +13,51 @@ $app = new \Slim\Slim();
 /**
  * validate-app
  * url - /validate-app
- * method - POST
+ * method - get
  * params - app_id
  */
+$app->get('/', function() use ($app) {
+$response["e"] = ERROR;
+ReturnResponse(200, $response);
+});
 
-$app->post('/validate-app', function() use ($app) {
+
+$app->get('/validate-app', function() use ($app) {
 	// define response array 
 	$response = array();
-
-
 	//add your class, if required
 	require_once dirname(__FILE__) . '/include/class/class_validate_app.php';
 	$validate_app = new Validate_app();
-	$app_id=$app->request()->post('app_id');
-	$imei=$app->request()->post('imei');
+	$app_id=$app->request()->get('app_id');
+	$imei=$app->request()->get('imei');
 	$validate = $validate_app->validate_app($app_id,$imei);
 	
 	if($validate){
 	//  success
-			$response["e"] = 0;
+			$response["e"] = NO_ERROR;
 		
 	} else {
 
 	//  error occurred
-		$response["e"] = 1;
+		$response["e"] = ERROR;
 		
 		
 	}
 	ReturnResponse(200, $response);
 });
 
-$app->post('/vehicle-loc-logs', function() use ($app) {
-	$app_key=$app->request()->post('app_id');
-	$lat=$app->request()->post('lt');
-	$lng=$app->request()->post('lg');
-	$td=$app->request()->post('td');
+$app->get('/vehicle-loc-logs', function() use ($app) {
+	$app_key=$app->request()->get('app_id');
+	$lat=$app->request()->get('lt');
+	$lng=$app->request()->get('lg');
+	$td=$app->request()->get('td');
 	//$response['res']=$app_key.' '.$lat.' '.$lng.' '.$td;
 	//add your class, if required
 	require_once dirname(__FILE__) . '/include/class/class_vehicle_location_log.php';
 	require_once dirname(__FILE__) . '/include/class/class_notifications.php';
 	require_once dirname(__FILE__) . '/include/class/class_trip.php';
+	require_once dirname(__FILE__) . '/include/class/class_driver.php';
+	$Driver = new Driver();
 	$VehicleLocLog = new VehicleLocationLog();
 	$Notifications = new Notifications();
 	$Trip = new Trip();	
@@ -61,26 +66,24 @@ $app->post('/vehicle-loc-logs', function() use ($app) {
 	if($td==LOG_LOCATION){
 		$result=$VehicleLocLog->logLocation($app_key,$lat,$lng,$id='-1');
 	}else if($td==LOG_LOCATION_AND_TRIP_DETAILS){
-		//add your class, if required
-		require_once dirname(__FILE__) . '/include/class/class_driver.php';
-		$Driver = new Driver();
 		
-		
-		$trip_from_lat						=	$app->request()->post('lts');
-		$trip_from_lng						=	$app->request()->post('lgs');
-		$trip_to_lat						=	$app->request()->post('lte');
-		$trip_to_lng						=	$app->request()->post('lge');
-		$dataArray['trip_start_date_time']	=	$app->request()->post('srt');
-		$dataArray['trip_end_date_time']	=	$app->request()->post('end');
+		$trip_from_lat						=	$app->request()->get('lts');
+		$trip_from_lng						=	$app->request()->get('lgs');
+		$trip_to_lat						=	$app->request()->get('lte');
+		$dataArray['distance_in_km']		=	$app->request()->get('dt');
+		$trip_to_lng						=	$app->request()->get('lge');
+		$dataArray['trip_start_date_time']	=	$app->request()->get('srt');
+		$dataArray['trip_end_date_time']	=	$app->request()->get('end');
 		$dataArray['trip_status_id']		=	TRIP_STATUS_COMPLETED;
-		$id									=	$app->request()->post('tid');
+		$id									=	$app->request()->get('tid');
 		$driver_status						=	DRIVER_STATUS_ACTIVE;
 
 		$Trip->update($dataArray,$id);	
-		$Driver->changeStatus($app_id,$driver_status);		
+		$Driver->changeStatus($app_key,$driver_status);		
 		
 		$VehicleLocLog->logLocation($app_key,$trip_from_lat,$trip_from_lng,$id);
 		$VehicleLocLog->logLocation($app_key,$trip_to_lat,$trip_to_lng,$id);
+		$VehicleLocLog->logLocation($app_key,$lat,$lng,$id='-1');
 	}
 
 	$newtrips			=	$Notifications->tripNotifications($app_key); 
@@ -119,7 +122,12 @@ $app->post('/vehicle-loc-logs', function() use ($app) {
 			$response['nft']=array('fr'=>$trips['trip_from'],'nid'=>$newtrips['id'],'sec'=>strtotime($trips['pick_up_date'].' '.$trips['pick_up_time']),'tid'=>$trips['id'],'to'=>$trips['trip_to']);
 			
 					
-			}
+			}	
+				$data=array('notification_status_id'=>NOTIFICATION_STATUS_NOTIFIED);
+				$Notifications->updateNotifications($data,$newtrips['id']);
+
+				$driver_status=DRIVER_STATUS_ENGAGED;
+				$Driver->changeStatus($app_key,$driver_status);	
 			}
 		}
 	}else{
@@ -147,16 +155,27 @@ $app->post('/vehicle-loc-logs', function() use ($app) {
 	ReturnResponse(200, $response);
 });
 
-$app->post('/reset', function() use ($app) {
-	$response['action']=$app->request()->post('name');
+$app->get('/reset', function() use ($app) {
+	$app_key=$app->request()->get('app_id');
+	$driver_status=DRIVER_STATUS_ACTIVE;
+	//add your class, if required
+	require_once dirname(__FILE__) . '/include/class/class_driver.php';
+	$Driver = new Driver();
+	$res=$Driver->changeStatus($app_key,$driver_status);
+	if($res==true){
+		$response["e"]=NO_ERROR;
+	}else{
+		$response["e"]=ERROR;
+	}
+
 	ReturnResponse(200, $response);
 });
 
-$app->post('/user-responds', function() use ($app) {
-	$app_key=$app->request()->post('app_id');
-	$trip_id=$app->request()->post('tid');
-	$notification_id=$app->request()->post('nid');
-	$ac=$app->request()->post('ac');
+$app->get('/user-responds', function() use ($app) {
+	$app_key=$app->request()->get('app_id');
+	$trip_id=$app->request()->get('tid');
+	$notification_id=$app->request()->get('nid');
+	$ac=$app->request()->get('ac');
 	//add your class, if required
 	require_once dirname(__FILE__) . '/include/class/class_driver.php';
 	$Driver = new Driver();
@@ -166,7 +185,15 @@ $app->post('/user-responds', function() use ($app) {
 	$Trip = new Trip();	
 	if($ac==TRIP_NOTIFICATION_REJECTED){
 		$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS);
-		$Notifications->updateNotifications($data,$notification_id);
+		$res=$Notifications->updateNotifications($data,$notification_id);
+		if($res==true){
+		$response['ac']=TRIP_REJECTED;
+		$driver_status=DRIVER_STATUS_ACTIVE;
+		$Driver->changeStatus($app_key,$driver_status);
+
+		}else{
+			$response['ac']=TRIP_ERROR;
+		}
 
 	}else if($ac==TRIP_NOTIFICATION_ACCEPTED){
 		$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS);
@@ -174,21 +201,62 @@ $app->post('/user-responds', function() use ($app) {
 		$trips=$Trip->getDetails($trip_id);
 		if($trips['driver_id']==gINVALID){
 			$driver_id=$Driver->getDriver($app_key);
-			$dataArray=array('driver_id'=>$driver_id);
-			$res=$Trip->update($dataArray,$id);
-			if($res==true){
-				
-			}	
+			if($driver_id!=false){
+				$dataArray=array('driver_id'=>$driver_id['id']);
+				$res=$Trip->update($dataArray,$trip_id);
+				if($res==true){
+					require_once dirname(__FILE__) . '/include/class/class_customer.php';
+					$Customer = new Customer();
+					$Customers=$Customer->getUserById($trips['customer_id']);
+					$response['ac']=TRIP_AWARDED;
+					$response['cn']=$Customers['name'];
+					$response['cm']=$Customers['mobile'];
+					if($trips['trip_type_id']==FUTURE_TRIP){
+						$driver_status=DRIVER_STATUS_ACTIVE;
+						$Driver->changeStatus($app_key,$driver_status);
+					}
+				}else{
+					$response['ac']=TRIP_ERROR;
+				}		
+			}else{
+				$response['ac']=TRIP_ERROR;
+			}
+		}else{
+			$response['ac']=TRIP_REGRET;
+
 		}
 
 	}else if($ac==TRIP_NOTIFICATION_TIME_OUT){
-
+		$data=array('notification_status_id'=>NOTIFICATION_STATUS_EXPIRED,'notification_view_status_id'=>NOTIFICATION_NOT_VIEWED_STATUS);
+		$res=$Notifications->updateNotifications($data,$notification_id);
+		if($res==true){
+			$response['ac']=TRIP_TIME_OUT;
+			$driver_status=DRIVER_STATUS_ACTIVE;
+			$Driver->changeStatus($app_key,$driver_status);
+		}else{
+			$response['ac']=TRIP_ERROR;
+		}
 	}
 	ReturnResponse(200, $response);
 });
 
 
+function checkFutureOrInstantTrip($tripdatetime){
 
+$date1 = date_create(date('Y-m-d H:i:s'));
+$date2 = date_create($tripdatetime);
+$diff= date_diff($date1, $date2);
+if(($diff->d == 0 && ($diff->h==0 || $diff->i > 30)) || ($diff->d == 0 && ($diff->h > 0)) || $diff->d > 0) {
+
+return INSTANT_TRIP;
+
+}else{
+
+return FUTURE_TRIP;
+
+}
+
+}
 
 
 function ReturnResponse($http_response, $response) {
