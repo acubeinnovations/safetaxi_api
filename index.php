@@ -14,7 +14,7 @@ $app = new \Slim\Slim();
  * validate-app
  * url - /validate-app
  * method - get
- * params - app_id
+ * params - app_id,imei
  */
 $app->get('/', function() use ($app) {
 $response["e"] = ERROR;
@@ -45,6 +45,13 @@ $app->get('/validate-app', function() use ($app) {
 	}
 	ReturnResponse(200, $response);
 });
+
+/**
+ * log locations and fetch notifications
+ * url - /vehicle-loc-logs
+ * method - get
+ * params - app_id,lt,lg,td,lts,lgs,lte,lge,dt,srt,end,tid
+ */
 
 $app->get('/vehicle-loc-logs', function() use ($app) {
 	$app_key=$app->request()->get('app_id');
@@ -155,6 +162,13 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	ReturnResponse(200, $response);
 });
 
+/**
+ * reset driver status to active 
+ * url - /reset
+ * method - get
+ * params - app_id
+ */
+
 $app->get('/reset', function() use ($app) {
 	$app_key=$app->request()->get('app_id');
 	$driver_status=DRIVER_STATUS_ACTIVE;
@@ -170,6 +184,45 @@ $app->get('/reset', function() use ($app) {
 
 	ReturnResponse(200, $response);
 });
+
+/**
+ * display loged locations for testing pupose only 
+ * url - /locations
+ * method - get
+ * params - 
+ */
+
+$app->get('/locations', function() use ($app) {
+
+require_once dirname(__FILE__) . '/include/class/class_vehicle_location_log.php';
+$VehicleLocLog = new VehicleLocationLog();
+
+$locations=$VehicleLocLog->getLogocationLogs();
+echo "<table><tr>
+		<td>id</td>
+		<td>app key</td>
+		<td>lat</td>
+		<td>lng</td>
+		<td>lng</td>
+		</tr>";
+for($i=0;$i<count($locations);$i++){
+echo "<tr>
+		<td>".$locations[$i]['id']."</td>
+		<td>".$locations[$i]['app_key']."</td>
+		<td>".$locations[$i]['lat']."</td>
+		<td>".$locations[$i]['lng']."</td>
+		<td>".$locations[$i]["datetime"]."</td></tr>";
+
+}
+echo "</table>";
+});
+
+/**
+ * user responds 
+ * url - /user-responds
+ * method - get
+ * params - app_id,nid,tid,ac
+ */
 
 $app->get('/user-responds', function() use ($app) {
 	$app_key=$app->request()->get('app_id');
@@ -202,9 +255,10 @@ $app->get('/user-responds', function() use ($app) {
 		if($trips['driver_id']==gINVALID){
 			$driver_id=$Driver->getDriver($app_key);
 			if($driver_id!=false){
-				$dataArray=array('driver_id'=>$driver_id['id']);
+				$dataArray=array('driver_id'=>$driver_id['id'],'trip_status_id'=>TRIP_STATUS_ACCEPTED);
 				$res=$Trip->update($dataArray,$trip_id);
 				if($res==true){
+					$trips=$Trip->getDetails($trip_id);
 					require_once dirname(__FILE__) . '/include/class/class_customer.php';
 					$Customer = new Customer();
 					$Customers=$Customer->getUserById($trips['customer_id']);

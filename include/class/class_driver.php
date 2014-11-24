@@ -14,7 +14,7 @@ class Driver{
 	}
 
 	public function changeStatus($app_key,$status){
-		$strSQL = "UPDATE  drivers SET driver_status_id= '".$status."' WHERE app_key='".$app_key."'";
+		$strSQL = "UPDATE  drivers SET driver_status_id= '".$status."',updated='".date('Y-m-d H:i:s')."' WHERE app_key='".$app_key."'";
 		$rsRES = mysqli_query($this->connection,$strSQL);
 			
 			if(mysqli_affected_rows($this->connection) == 1){

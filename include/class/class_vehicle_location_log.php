@@ -27,6 +27,35 @@ class VehicleLocationLog {
 		return true;
 		
 	}
+
+	public function getLogocationLogs($app_key='') {
+		$strSQL = "SELECT * FROM  vehicle_locations_logs";
+		if($app_key!=''){
+		$strSQL .= " WHERE app_key = '".mysqli_real_escape_string($this->connection,$app_key)."'";
+		}
+		$strSQL .= " order by id DESC";
+		$locations = array();
+		$rsRES = mysqli_query($this->connection,$strSQL);
+		$i=0;
+		if ( mysqli_num_rows($rsRES) >= 1 ){
+			while ($row=mysqli_fetch_row($rsRES))
+			{
+			$locations[$i]["id"] = $row[0];
+			$locations[$i]["app_key"] = $row[1];
+			$locations[$i]["lat"] = $row[2];
+			$locations[$i]["lng"] = $row[3];
+			$locations[$i]["trip_id"] = $row[4];
+			$locations[$i]["datetime"] = $row[5];
+			$i++;
+			
+			}
+			return $locations;
+		}
+		else{
+			
+			return false;
+		}
+	}
 	
 	
 
