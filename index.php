@@ -79,8 +79,10 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 		$trip_to_lat						=	$app->request()->get('lte');
 		$dataArray['distance_in_km']		=	$app->request()->get('dt');
 		$trip_to_lng						=	$app->request()->get('lge');
-		$dataArray['trip_start_date_time']	=	$app->request()->get('srt');
-		$dataArray['trip_end_date_time']	=	$app->request()->get('end');
+		$srt								=	$app->request()->get('srt')/1000;
+		$end								=	$app->request()->get('end')/1000;
+		$dataArray['trip_start_date_time']	=	date('Y-m-d H:i:s',$srt);
+		$dataArray['trip_end_date_time']	=	date('Y-m-d H:i:s',$end);
 		$dataArray['trip_status_id']		=	TRIP_STATUS_COMPLETED;
 		$id									=	$app->request()->get('tid');
 		$driver_status						=	DRIVER_STATUS_ACTIVE;
@@ -117,16 +119,27 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	if($newtrips!=false){
 		if($newtrips['trip_id'] > gINVALID){
 			$trips=$Trip->getDetails($newtrips['trip_id']);
+			
 			if($trips!=false){
-			if($trips['trip_type_id']==INSTANT_TRIP){
+			$tripdatetime							=$trips['pick_up_date'].' '.$trips['pick_up_time'];
+			$trip_type_id=checkFutureOrInstantTrip($tripdatetime);
+			$dataArray=array('trip_type_id'=>$trip_type_id);
+			$res=$Trip->update($dataArray,$newtrips['trip_id']);
+			if($trip_type_id==INSTANT_TRIP){
 			$td_for_array=$td_for_array*NEW_INSTANT_TRIP;
 			$response['td']=$td_for_array;
-			$response['nct']=array('fr'=>$trips['trip_from'],'nid'=>$newtrips['id'],'sec'=>strtotime($trips['pick_up_date'].' '.$trips['pick_up_time']),'tid'=>$trips['id'],'to'=>$trips['trip_to']);
+			$dates=explode('-',$trips['pick_up_date']);
+			$time=explode(':',$trips['pick_up_time']);
+			$unixtime=mktime($time[0],$time[1],0,$dates[1],$dates[2],$dates[0])*1000;
+			$response['nct']=array('fr'=>$trips['trip_from'],'nid'=>$newtrips['id'],'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$trips['trip_to']);
 			
-			}if($trips['trip_type_id']==FUTURE_TRIP){
+			}else if($trip_type_id==FUTURE_TRIP){
 			$td_for_array=$td_for_array*NEW_FUTURE_TRIP;
 			$response['td']=$td_for_array;
-			$response['nft']=array('fr'=>$trips['trip_from'],'nid'=>$newtrips['id'],'sec'=>strtotime($trips['pick_up_date'].' '.$trips['pick_up_time']),'tid'=>$trips['id'],'to'=>$trips['trip_to']);
+			$dates=explode('-',$trips['pick_up_date']);
+			$time=explode(':',$trips['pick_up_time']);
+			$unixtime=mktime($time[0],$time[1],0,$dates[1],$dates[2],$dates[0])*1000;
+			$response['nft']=array('fr'=>$trips['trip_from'],'nid'=>$newtrips['id'],'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$trips['trip_to']);
 			
 					
 			}	
@@ -152,7 +165,10 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 		for($updated_trips_index=0;$updated_trips_index<count($updatedtrips);$updated_trips_index++){
 			$trips=$Trip->getDetails($updatedtrips[$updated_trips_index]);	
 				if($trips!=false){
-				$trips_updated[$updated_trips_index]=array('fr'=>$trips['trip_from'],'sec'=>strtotime($trips['pick_up_date'].' '.$trips['pick_up_time']),'tid'=>$trips['id'],'to'=>$trips['trip_to']);
+				$dates=explode('-',$trips['pick_up_date']);
+				$time=explode(':',$trips['pick_up_time']);
+				$unixtime=mktime($time[0],$time[1],0,$dates[1],$dates[2],$dates[0])*1000;
+				$trips_updated[$updated_trips_index]=array('fr'=>$trips['trip_from'],'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$trips['trip_to']);
 				}
 			
 			}
@@ -277,7 +293,8 @@ $app->get('/user-responds', function() use ($app) {
 			}
 		}else{
 			$response['ac']=TRIP_REGRET;
-
+			$driver_status=DRIVER_STATUS_ACTIVE;
+			$Driver->changeStatus($app_key,$driver_status);
 		}
 
 	}else if($ac==TRIP_NOTIFICATION_TIME_OUT){
@@ -297,20 +314,20 @@ $app->get('/user-responds', function() use ($app) {
 
 function checkFutureOrInstantTrip($tripdatetime){
 
-$date1 = date_create(date('Y-m-d H:i:s'));
-$date2 = date_create($tripdatetime);
-$diff= date_diff($date1, $date2);
-if(($diff->d == 0 && ($diff->h==0 || $diff->i > 30)) || ($diff->d == 0 && ($diff->h > 0)) || $diff->d > 0) {
+		$date1 = date_create(date('Y-m-d H:i:s'));
+		$date2 = date_create($tripdatetime);
+		$diff= date_diff($date1, $date2);//echo $diff->d.' '. $diff->h.' '.$diff->i;
+		if(($diff->d == 0 && $diff->h==0 && $diff->i > 30) || ($diff->d == 0 && $diff->h > 0) || $diff->d > 0) {
 
-return INSTANT_TRIP;
+		return FUTURE_TRIP;
 
-}else{
+		}else{
 
-return FUTURE_TRIP;
+		return INSTANT_TRIP;
 
-}
+		}
 
-}
+	}
 
 
 function ReturnResponse($http_response, $response) {
