@@ -68,7 +68,8 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	$VehicleLocLog = new VehicleLocationLog();
 	$Notifications = new Notifications();
 	$Trip = new Trip();	
-	
+	$driver_exists=$Driver->getDriver($app_key);
+	if($driver_exists!=false){
 
 	if($td==LOG_LOCATION){
 		$result=$VehicleLocLog->logLocation($app_key,$lat,$lng,$id='-1');
@@ -174,6 +175,9 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 			}
 			$response['upt']=$trips_updated;
 		}
+	}else{
+		$response['e']=1;
+	}
 	
 	ReturnResponse(200, $response);
 });
