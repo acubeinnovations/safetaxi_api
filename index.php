@@ -75,18 +75,18 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 		$result=$VehicleLocLog->logLocation($app_key,$lat,$lng,$id='-1');
 	}else if($td==LOG_LOCATION_AND_TRIP_DETAILS){
 		
-		$trip_from_lat						=	$app->request()->get('lts');
-		$trip_from_lng						=	$app->request()->get('lgs');
-		$trip_to_lat						=	$app->request()->get('lte');
-		$dataArray['distance_in_km']		=	$app->request()->get('dt');
-		$trip_to_lng						=	$app->request()->get('lge');
-		$srt								=	$app->request()->get('srt')/1000;
-		$end								=	$app->request()->get('end')/1000;
-		$dataArray['trip_start_date_time']	=	date('Y-m-d H:i:s',$srt);
-		$dataArray['trip_end_date_time']	=	date('Y-m-d H:i:s',$end);
-		$dataArray['trip_status_id']		=	TRIP_STATUS_COMPLETED;
-		$id									=	$app->request()->get('tid');
-		$driver_status						=	DRIVER_STATUS_ACTIVE;
+		$trip_from_lat							=	$app->request()->get('lts');
+		$trip_from_lng							=	$app->request()->get('lgs');
+		$trip_to_lat							=	$app->request()->get('lte');
+		$dataArray['distance_in_km_from_app']	=	$app->request()->get('dt');
+		$trip_to_lng							=	$app->request()->get('lge');
+		$srt									=	$app->request()->get('srt')/1000;
+		$end									=	$app->request()->get('end')/1000;
+		$dataArray['trip_start_date_time']		=	date('Y-m-d H:i:s',$srt);
+		$dataArray['trip_end_date_time']		=	date('Y-m-d H:i:s',$end);
+		$dataArray['trip_status_id']			=	TRIP_STATUS_COMPLETED;
+		$id										=	$app->request()->get('tid');
+		$driver_status							=	DRIVER_STATUS_ACTIVE;
 
 		$Trip->update($dataArray,$id);	
 		$Driver->changeStatus($app_key,$driver_status);		
