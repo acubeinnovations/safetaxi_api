@@ -16,7 +16,7 @@ class Trip {
 	}
 	
 	public function update($dataArray = array(),$id){
-		if($dataArray){
+		if(count($dataArray)>0){
 			$i=0;
 			$strSQL = "UPDATE trips SET ";
 			foreach($dataArray as $key=>$value){

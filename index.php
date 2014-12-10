@@ -1,7 +1,6 @@
 <?php 
-	//error_reporting(0);
+//error_reporting(0);
 define('CHECK_INCLUDED', true);
-
 require_once 'include/conf.php';
 require_once 'include/functions.php';
 require 'include/libs/Slim/Slim.php';
@@ -11,16 +10,23 @@ require 'include/libs/Slim/Slim.php';
 $app = new \Slim\Slim();
 
 /**
- * validate-app
- * url - /validate-app
+ * /root
+ * url - /
  * method - get
- * params - app_id,imei
+ * 
  */
+
 $app->get('/', function() use ($app) {
 $response["e"] = ERROR;
 ReturnResponse(200, $response);
 });
 
+/**
+ * validate-app
+ * url - /validate-app
+ * method - get
+ * params - app_id,imei
+ */
 
 $app->get('/validate-app', function() use ($app) {
 	// define response array 
@@ -70,9 +76,9 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	$Trip = new Trip();	
 	$driver_exists=$Driver->getDriver($app_key);
 	if($driver_exists!=false){
-
+		$Notifications->logreponds($app_key,$tid='-1',$td,$_SERVER['QUERY_STRING']);
 	if($td==LOG_LOCATION){
-		$result=$VehicleLocLog->logLocation($app_key,$lat,$lng,$id='-1');
+		$result=$VehicleLocLog->logLocation($app_key,$lat,$lng,gINVALID);
 	}else if($td==LOG_LOCATION_AND_TRIP_DETAILS){
 		
 		$trip_from_lat							=	$app->request()->get('lts');
@@ -84,7 +90,7 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 		$end									=	$app->request()->get('end')/1000;
 		$dataArray['trip_start_date_time']		=	date('Y-m-d H:i:s',$srt);
 		$dataArray['trip_end_date_time']		=	date('Y-m-d H:i:s',$end);
-		$dataArray['trip_status_id']			=	TRIP_STATUS_COMPLETED;
+		$dataArray['trip_status_id']			=	TRIP_STATUS_TRIP_COMPLETED;
 		$id										=	$app->request()->get('tid');
 		$driver_status							=	DRIVER_STATUS_ACTIVE;
 
@@ -93,7 +99,7 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 		
 		$VehicleLocLog->logLocation($app_key,$trip_from_lat,$trip_from_lng,$id);
 		$VehicleLocLog->logLocation($app_key,$trip_to_lat,$trip_to_lng,$id);
-		$VehicleLocLog->logLocation($app_key,$lat,$lng,$id='-1');
+		$VehicleLocLog->logLocation($app_key,$lat,$lng,gINVALID);
 	}
 
 	$newtrips			=	$Notifications->tripNotifications($app_key); 
@@ -176,7 +182,7 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 			$response['upt']=$trips_updated;
 		}
 	}else{
-		$response['e']=1;
+		$response['e']=ERROR;
 	}
 	
 	ReturnResponse(200, $response);
@@ -272,7 +278,7 @@ $app->get('/user-responds', function() use ($app) {
 		$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS);
 		$Notifications->updateNotifications($data,$notification_id);
 		$trips=$Trip->getDetails($trip_id);
-		if($trips['driver_id']==gINVALID){
+		if(trim($trips['driver_id'])==gINVALID && trim($trips['trip_status_id'])==TRIP_STATUS_PENDING){
 			$driver_id=$Driver->getDriver($app_key);
 			if($driver_id!=false){
 				$dataArray=array('driver_id'=>$driver_id['id'],'trip_status_id'=>TRIP_STATUS_ACCEPTED);
@@ -304,6 +310,7 @@ $app->get('/user-responds', function() use ($app) {
 	}else if($ac==TRIP_NOTIFICATION_TIME_OUT){
 		$data=array('notification_status_id'=>NOTIFICATION_STATUS_EXPIRED,'notification_view_status_id'=>NOTIFICATION_NOT_VIEWED_STATUS);
 		$res=$Notifications->updateNotifications($data,$notification_id);
+		//$Notifications->logreponds($app_key,$trip_id,$ac);
 		if($res==true){
 			$response['ac']=TRIP_TIME_OUT;
 			$driver_status=DRIVER_STATUS_ACTIVE;

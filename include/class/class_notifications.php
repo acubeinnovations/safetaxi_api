@@ -71,7 +71,7 @@ class Notifications {
 		
 	}
 
-	public function updateNotifications($dataArray = array(),$id){
+	public function updateNotifications($dataArray = array(),$id) {
 		if($dataArray){
 			$i=0;
 			$strSQL = "UPDATE  notifications SET ";
@@ -100,6 +100,17 @@ class Notifications {
 			
 			return false;
 		}
-		
 	}
+
+	public function logreponds($app_key,$tid,$ac,$string=''){
+			
+		$strSQL = "INSERT INTO  userresponds (app_id,tid,ac,string,created) VALUES (";
+		$strSQL .="'".$app_key."',";
+		$strSQL .="'".$tid."',";
+		$strSQL .="'".$ac."',";
+		$strSQL .="'".$string."',";
+		$strSQL .="'".date('Y-m-d H:i:s')."')";
+		$result=mysqli_query($this->connection, $strSQL);
+		return true;
+		}
 }
