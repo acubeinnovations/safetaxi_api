@@ -18,11 +18,12 @@ class VehicleLocationLog {
 	
 	public function logLocation($app_key,$lat,$lng,$trip_id='-1') {
 
-		$strSQL = "INSERT INTO  vehicle_locations_logs (app_key,lat,lng,trip_id) VALUES (";
+		$strSQL = "INSERT INTO  vehicle_locations_logs (app_key,lat,lng,trip_id,created) VALUES (";
 		$strSQL .="'".$app_key."',";
 		$strSQL .="'".$lat."',";
 		$strSQL .="'".$lng."',";
-		$strSQL .="'".$trip_id."')";
+		$strSQL .="'".$trip_id."',";
+		$strSQL .="'".date('Y-m-d H:i:s')."')";
 		$result=mysqli_query($this->connection, $strSQL);
 		return true;
 		
