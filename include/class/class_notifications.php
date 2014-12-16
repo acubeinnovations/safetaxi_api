@@ -71,6 +71,48 @@ class Notifications {
 		
 	}
 
+	public function commonmsgNotifications($app_key){
+		
+		$strSQL = "SELECT id,message FROM notifications WHERE app_key = '".mysqli_real_escape_string($this->connection,$app_key)."' AND notification_type_id=".NOTIFICATION_TYPE_COMMON_MSGS." AND notification_status_id=".gINVALID." AND  notification_view_status_id=".NOTIFICATION_NOT_VIEWED_STATUS." ORDER BY id";
+		$rsRES = mysqli_query($this->connection,$strSQL);
+		if ( mysqli_num_rows($rsRES) >= 1 ){
+			$i=0;
+			$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS);
+			while ($row=mysqli_fetch_row($rsRES))
+			{
+			$cmsgs[$i]=$row[1];	
+			$this->updateNotifications($data,$row[0]);
+			$i++;
+			}
+			return $cmsgs;
+		}else{
+			
+			return false;
+		}
+		
+	}
+
+	public function paymentNotifications($app_key){
+		
+		$strSQL = "SELECT id,message FROM notifications WHERE app_key = '".mysqli_real_escape_string($this->connection,$app_key)."' AND notification_type_id=".NOTIFICATION_TYPE_PAYMENT_MSGS." AND notification_status_id=".gINVALID." AND  notification_view_status_id=".NOTIFICATION_NOT_VIEWED_STATUS." ORDER BY id";
+		$rsRES = mysqli_query($this->connection,$strSQL);
+		if ( mysqli_num_rows($rsRES) >= 1 ){
+			$i=0;
+			$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS);
+			while ($row=mysqli_fetch_row($rsRES))
+			{
+			$pmsgs[$i]=$row[1];	
+			$this->updateNotifications($data,$row[0]);
+			$i++;
+			}
+			return $pmsgs;
+		}else{
+			
+			return false;
+		}
+		
+	}
+
 	public function updateNotifications($dataArray = array(),$id) {
 		if($dataArray){
 			$i=0;

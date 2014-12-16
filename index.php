@@ -76,7 +76,7 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	$Trip = new Trip();	
 	$driver_exists=$Driver->getDriver($app_key);
 	if($driver_exists!=false){
-		$Notifications->logreponds($app_key,$tid='-1',$td,$_SERVER['QUERY_STRING']);
+		//$Notifications->logreponds($app_key,$tid='-1',$td,$_SERVER['QUERY_STRING']);
 	if($td==LOG_LOCATION){
 		$result=$VehicleLocLog->logLocation($app_key,$lat,$lng,gINVALID);
 	}else if($td==LOG_LOCATION_AND_TRIP_DETAILS){
@@ -105,6 +105,8 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	$newtrips			=	$Notifications->tripNotifications($app_key); 
 	$canceledtrips		=	$Notifications->tripCancelNotifications($app_key); 
 	$updatedtrips		=	$Notifications->tripUpdateNotifications($app_key); 
+	$commonmsgs			=	$Notifications->commonmsgNotifications($app_key); 
+	$paymentmsgs		=	$Notifications->paymentNotifications($app_key);
 	
 	$td_for_array=1;
 
@@ -118,6 +120,16 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	if($updatedtrips!=false && count($updatedtrips)>=1){
 
 		$td_for_array=$td_for_array*UPDATE_FUTURE_TRIP;
+
+	}
+	if($commonmsgs!=false && count($commonmsgs)>=1){
+
+		$td_for_array=$td_for_array*COMMON_MSGS;
+
+	}
+	if($paymentmsgs!=false && count($paymentmsgs)>=1){
+
+		$td_for_array=$td_for_array*PAYMENT_MSGS;
 
 	}
 
@@ -181,6 +193,15 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 			}
 			$response['upt']=$trips_updated;
 		}
+
+	if($commonmsgs!=false){
+		$response['cmsg']=$commonmsgs;
+	}
+
+	if($paymentmsgs!=false){
+		$response['pmsg']=$paymentmsgs;
+	}
+
 	}else{
 		$response['e']=ERROR;
 	}
@@ -274,7 +295,7 @@ $app->get('/user-responds', function() use ($app) {
 			$response['ac']=TRIP_ERROR;
 		}
 
-	}else if($ac==TRIP_NOTIFICATION_ACCEPTED){
+	}else if($ac==TRIP_NOTIFICATION_ACCEPTED) {
 		$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS);
 		$Notifications->updateNotifications($data,$notification_id);
 		$trips=$Trip->getDetails($trip_id);
