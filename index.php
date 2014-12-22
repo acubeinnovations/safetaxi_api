@@ -105,11 +105,11 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	$newtrips			=	$Notifications->tripNotifications($app_key); 
 	$canceledtrips		=	$Notifications->tripCancelNotifications($app_key); 
 	$updatedtrips		=	$Notifications->tripUpdateNotifications($app_key); 
+	$reccurenttrips		=	$Notifications->reccurenttrips($app_key); 
 	$commonmsgs			=	$Notifications->commonmsgNotifications($app_key); 
 	$paymentmsgs		=	$Notifications->paymentNotifications($app_key);
 	
 	$td_for_array=1;
-
 	
 	if($canceledtrips!=false && count($canceledtrips)>=1){
 
@@ -130,6 +130,11 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	if($paymentmsgs!=false && count($paymentmsgs)>=1){
 
 		$td_for_array=$td_for_array*PAYMENT_MSGS;
+
+	}
+	if($reccurenttrips!=false && count($reccurenttrips)>=1){
+
+		$td_for_array=$td_for_array*RECCURENT_TRIPS;
 
 	}
 
@@ -201,10 +206,15 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	if($paymentmsgs!=false){
 		$response['pmsg']=$paymentmsgs;
 	}
-
+	if($reccurenttrips!=false){
+		$response['rct']=$reccurenttrips['trips'];
+		$response['cn']=$reccurenttrips['customer']['cn'];
+		$response['cm']=$reccurenttrips['customer']['cm'];
+	}
 	}else{
 		$response['e']=ERROR;
 	}
+
 	
 	ReturnResponse(200, $response);
 });

@@ -71,6 +71,35 @@ class Notifications {
 		
 	}
 
+	public function reccurenttrips($app_key){
+		
+		$strSQL = "SELECT N.trip_id as tid,N.id as nid,T.trip_from as fr,T.trip_to as 'to',UNIX_TIMESTAMP(CONCAT(T.pick_up_date,' ',T.pick_up_time)) as sec,C.name as cn,C.mobile as cm FROM notifications as N LEFT JOIN trips as T ON T.id=N.trip_id LEFT JOIN customers as C ON C.id=T.customer_id WHERE app_key = '".mysqli_real_escape_string($this->connection,$app_key)."' AND notification_type_id=".NOTIFICATION_TYPE_TRIP_RECCURENT." AND notification_status_id=".gINVALID." AND  notification_view_status_id=".NOTIFICATION_NOT_VIEWED_STATUS." ORDER BY N.id";
+		$rsRES = mysqli_query($this->connection,$strSQL);
+		if ( mysqli_num_rows($rsRES) >= 1 ){
+			$i=0;
+			$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS);
+			while ($row=mysqli_fetch_row($rsRES))
+			{
+			$customer['cn']		=	$row[5];
+			$customer['cm']		=	$row[6];
+			$trips[$i]['tid']	=	$row[0];	
+			$trips[$i]['nid']	=	$row[1];
+			$trips[$i]['fr']	=	$row[2];
+			$trips[$i]['to']	=	$row[3];
+			$trips[$i]['sec']	=	$row[4]*1000;
+			$this->updateNotifications($data,$row[1]);
+			$i++;
+			}
+			$rtrips['customer']=$customer;
+			$rtrips['trips']=$trips;
+			return $rtrips;
+		}else{
+			
+			return false;
+		}
+		
+	}
+
 	public function commonmsgNotifications($app_key){
 		
 		$strSQL = "SELECT id,message FROM notifications WHERE app_key = '".mysqli_real_escape_string($this->connection,$app_key)."' AND notification_type_id=".NOTIFICATION_TYPE_COMMON_MSGS." AND notification_status_id=".gINVALID." AND  notification_view_status_id=".NOTIFICATION_NOT_VIEWED_STATUS." ORDER BY id";
