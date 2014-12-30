@@ -103,6 +103,8 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	}
 
 	$newtrips			=	$Notifications->tripNotifications($app_key); 
+	$awardedtrips		=	$Notifications->tripAwardedNotifications($app_key);
+	$regrettrips		=	$Notifications->tripRegretNotifications($app_key);
 	$canceledtrips		=	$Notifications->tripCancelNotifications($app_key); 
 	$updatedtrips		=	$Notifications->tripUpdateNotifications($app_key); 
 	$reccurenttrips		=	$Notifications->reccurenttrips($app_key); 
@@ -185,6 +187,49 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 		$response['clt']=$canceledtrips;
 	}
 	
+	if($awardedtrips!=false){
+		if($awardedtrips['trip_id'] > gINVALID){
+			$trips=$Trip->getDetails($awardedtrips['trip_id']);
+			
+			if($trips!=false){
+			$tripdatetime	=	$trips['pick_up_date'].' '.$trips['pick_up_time'];
+			$trip_type_id=checkFutureOrInstantTrip($tripdatetime);
+			$dataArray=array('trip_type_id'=>$trip_type_id);
+			$res=$Trip->update($dataArray,$awardedtrips['trip_id']);
+			$response['ac']='t';
+			$td_for_array=$td_for_array*TRIP_ACCEPTED;
+			$response['td']=$td_for_array;
+			$dates=explode('-',$trips['pick_up_date']);
+			$time=explode(':',$trips['pick_up_time']);
+			$unixtime=mktime($time[0],$time[1],0,$dates[1],$dates[2],$dates[0])*1000;
+			if($trip_type_id==INSTANT_TRIP){
+				$trip_typ='c';
+				$driver_status=DRIVER_STATUS_ENGAGED;
+			}else if($trip_type_id==FUTURE_TRIP){
+				$trip_typ='f';
+				$driver_status=DRIVER_STATUS_ACTIVE;
+			}
+			require_once dirname(__FILE__) . '/include/class/class_customer.php';
+			$Customer = new Customer();
+			$Customers=$Customer->getUserById($trips['customer_id']);	
+			$response['trip']=array('fr'=>$trips['trip_from'],'typ'=>$trip_typ,'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$trips['trip_to'],'cm'=>$Customers['mobile'],'cn'=>$Customers['name']);
+			
+				$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS);
+				$Notifications->updateNotifications($data,$awardedtrips['id']);
+
+				
+				$Driver->changeStatus($app_key,$driver_status);	
+			}
+		}
+	}else if($regrettrips!=false){
+		$response['td']=$td_for_array*TRIP_ACCEPTED;
+		$response['ac']='f';
+		$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS);
+		$Notifications->updateNotifications($data,$regrettrips['id']);
+		$driver_status=DRIVER_STATUS_ACTIVE;
+		$Driver->changeStatus($app_key,$driver_status);
+	}
+
 	if($updatedtrips!=false){
 		for($updated_trips_index=0;$updated_trips_index<count($updatedtrips);$updated_trips_index++){
 			$trips=$Trip->getDetails($updatedtrips[$updated_trips_index]);	
@@ -285,6 +330,7 @@ $app->get('/user-responds', function() use ($app) {
 	$app_key=$app->request()->get('app_id');
 	$trip_id=$app->request()->get('tid');
 	$notification_id=$app->request()->get('nid');
+	$amount=$app->request()->get('amt');
 	$ac=$app->request()->get('ac');
 	//add your class, if required
 	require_once dirname(__FILE__) . '/include/class/class_driver.php';
@@ -306,33 +352,12 @@ $app->get('/user-responds', function() use ($app) {
 		}
 
 	}else if($ac==TRIP_NOTIFICATION_ACCEPTED) {
-		$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS);
+		$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS,'amount'=>$amount);
 		$Notifications->updateNotifications($data,$notification_id);
 		$trips=$Trip->getDetails($trip_id);
-		if(trim($trips['driver_id'])==gINVALID && trim($trips['trip_status_id'])==TRIP_STATUS_PENDING){
-			$driver_id=$Driver->getDriver($app_key);
-			if($driver_id!=false){
-				$dataArray=array('driver_id'=>$driver_id['id'],'trip_status_id'=>TRIP_STATUS_ACCEPTED);
-				$res=$Trip->update($dataArray,$trip_id);
-				if($res==true){
-					$trips=$Trip->getDetails($trip_id);
-					require_once dirname(__FILE__) . '/include/class/class_customer.php';
-					$Customer = new Customer();
-					$Customers=$Customer->getUserById($trips['customer_id']);
-					$response['ac']=TRIP_AWARDED;
-					$response['cn']=$Customers['name'];
-					$response['cm']=$Customers['mobile'];
-					if($trips['trip_type_id']==FUTURE_TRIP){
-						$driver_status=DRIVER_STATUS_ACTIVE;
-						$Driver->changeStatus($app_key,$driver_status);
-					}
-				}else{
-					$response['ac']=TRIP_ERROR;
-				}		
-			}else{
-				$response['ac']=TRIP_ERROR;
-			}
-		}else{
+		$response['ac']=RESPONSE;
+		if(trim($trips['driver_id'])!=gINVALID && trim($trips['trip_status_id'])!=TRIP_STATUS_PENDING){
+		
 			$response['ac']=TRIP_REGRET;
 			$driver_status=DRIVER_STATUS_ACTIVE;
 			$Driver->changeStatus($app_key,$driver_status);

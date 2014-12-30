@@ -11,6 +11,8 @@ define('MYSQL_PASSWORD', 'Mysql@Acube2');
 define('MYSQL_HOST', 'localhost');
 define('MYSQL_DB_NAME', 'safetaxi');
 
+define('RESPONSE','1');
+
 define('LOG_LOCATION','0');
 define('LOG_LOCATION_AND_TRIP_DETAILS','1');
 define('NO_NEW_TRIP', '2');
@@ -21,6 +23,7 @@ define('UPDATE_FUTURE_TRIP', '11');
 define('COMMON_MSGS', '13');
 define('PAYMENT_MSGS', '17');
 define('RECCURENT_TRIPS', '19');
+define('TRIP_ACCEPTED', '23');
 
 define('TRIP_NOTIFICATION_REJECTED', '0');
 define('TRIP_NOTIFICATION_ACCEPTED', '1');
@@ -59,6 +62,8 @@ define('NOTIFICATION_TYPE_TRIP_UPDATE', '3');
 define('NOTIFICATION_TYPE_PAYMENT_MSGS', '4');
 define('NOTIFICATION_TYPE_COMMON_MSGS', '5');
 define('NOTIFICATION_TYPE_TRIP_RECCURENT','6');
+define('NOTIFICATION_TYPE_TRIP_AWARDED','7');
+define('NOTIFICATION_TYPE_TRIP_REGRET','8');
 
 define('NOTIFICATION_STATUS_NOTIFIED', '1');
 define('NOTIFICATION_STATUS_RESPONDED', '2');

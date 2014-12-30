@@ -29,6 +29,30 @@ class Notifications {
 		}
 		
 	}
+	public function tripAwardedNotifications($app_key){
+		
+		$strSQL = "SELECT * FROM notifications WHERE app_key = '".mysqli_real_escape_string($this->connection,$app_key)."' AND notification_type_id=".NOTIFICATION_TYPE_TRIP_AWARDED." AND notification_status_id=".gINVALID." AND  notification_view_status_id=".NOTIFICATION_NOT_VIEWED_STATUS." ORDER BY id DESC LIMIT 1";
+		$rsRES = mysqli_query($this->connection,$strSQL);
+		if ( mysqli_num_rows($rsRES) == 1 ){
+			return mysqli_fetch_assoc($rsRES);
+		}else{
+			
+			return false;
+		}
+		
+	}
+	public function tripRegretNotifications($app_key){
+		
+		$strSQL = "SELECT * FROM notifications WHERE app_key = '".mysqli_real_escape_string($this->connection,$app_key)."' AND notification_type_id=".NOTIFICATION_TYPE_TRIP_REGRET." AND notification_status_id=".gINVALID." AND  notification_view_status_id=".NOTIFICATION_NOT_VIEWED_STATUS." ORDER BY id DESC LIMIT 1";
+		$rsRES = mysqli_query($this->connection,$strSQL);
+		if ( mysqli_num_rows($rsRES) == 1 ){
+			return mysqli_fetch_assoc($rsRES);
+		}else{
+			
+			return false;
+		}
+		
+	}
 	public function tripCancelNotifications($app_key){
 		
 		$strSQL = "SELECT trip_id,id FROM notifications WHERE app_key = '".mysqli_real_escape_string($this->connection,$app_key)."' AND notification_type_id=".NOTIFICATION_TYPE_TRIP_CANCELLED." AND notification_status_id=".gINVALID." AND  notification_view_status_id=".NOTIFICATION_NOT_VIEWED_STATUS." ORDER BY id";
