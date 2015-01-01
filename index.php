@@ -151,13 +151,24 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 			$trip_type_id=checkFutureOrInstantTrip($tripdatetime);
 			$dataArray=array('trip_type_id'=>$trip_type_id);
 			$res=$Trip->update($dataArray,$newtrips['trip_id']);
+			if(isset($trips['trip_from_landmark']) && $trips['trip_to_landmark']!=''){
+			$from=$trips['trip_from'].','.$trips['trip_from_landmark'];
+			}else{
+			$from=$trips['trip_from'];
+			}
+			if(isset($trips['trip_to_landmark']) && $trips['trip_to_landmark']!=''){
+			$to=$trips['trip_to'].','.$trips['trip_to_landmark'];
+			}else{
+			$to=$trips['trip_to'];
+			}
 			if($trip_type_id==INSTANT_TRIP){
 			$td_for_array=$td_for_array*NEW_INSTANT_TRIP;
 			$response['td']=$td_for_array;
 			$dates=explode('-',$trips['pick_up_date']);
 			$time=explode(':',$trips['pick_up_time']);
 			$unixtime=mktime($time[0],$time[1],0,$dates[1],$dates[2],$dates[0])*1000;
-			$response['nct']=array('fr'=>$trips['trip_from'],'nid'=>$newtrips['id'],'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$trips['trip_to']);
+		
+			$response['nct']=array('fr'=>$from,'nid'=>$newtrips['id'],'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$to);
 			
 			}else if($trip_type_id==FUTURE_TRIP){
 			$td_for_array=$td_for_array*NEW_FUTURE_TRIP;
@@ -165,7 +176,7 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 			$dates=explode('-',$trips['pick_up_date']);
 			$time=explode(':',$trips['pick_up_time']);
 			$unixtime=mktime($time[0],$time[1],0,$dates[1],$dates[2],$dates[0])*1000;
-			$response['nft']=array('fr'=>$trips['trip_from'],'nid'=>$newtrips['id'],'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$trips['trip_to']);
+			$response['nft']=array('fr'=>$from,'nid'=>$newtrips['id'],'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$to);
 			
 					
 			}	
@@ -202,6 +213,16 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 			$dates=explode('-',$trips['pick_up_date']);
 			$time=explode(':',$trips['pick_up_time']);
 			$unixtime=mktime($time[0],$time[1],0,$dates[1],$dates[2],$dates[0])*1000;
+			if(isset($trips['trip_from_landmark']) && $trips['trip_to_landmark']!=''){
+			$from=$trips['trip_from'].','.$trips['trip_from_landmark'];
+			}else{
+			$from=$trips['trip_from'];
+			}
+			if(isset($trips['trip_to_landmark']) && $trips['trip_to_landmark']!=''){
+			$to=$trips['trip_to'].','.$trips['trip_to_landmark'];
+			}else{
+			$to=$trips['trip_to'];
+			}
 			if($trip_type_id==INSTANT_TRIP){
 				$trip_typ='c';
 				$driver_status=DRIVER_STATUS_ENGAGED;
@@ -212,7 +233,7 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 			require_once dirname(__FILE__) . '/include/class/class_customer.php';
 			$Customer = new Customer();
 			$Customers=$Customer->getUserById($trips['customer_id']);	
-			$response['trip']=array('fr'=>$trips['trip_from'],'typ'=>$trip_typ,'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$trips['trip_to'],'cm'=>$Customers['mobile'],'cn'=>$Customers['name']);
+			$response['trip']=array('fr'=>$from,'typ'=>$trip_typ,'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$to,'cm'=>$Customers['mobile'],'cn'=>$Customers['name']);
 			
 				$data=array('notification_status_id'=>NOTIFICATION_STATUS_RESPONDED,'notification_view_status_id'=>NOTIFICATION_VIEWED_STATUS);
 				$Notifications->updateNotifications($data,$awardedtrips['id']);
