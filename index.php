@@ -161,6 +161,8 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 			}else{
 			$to=$trips['trip_to'];
 			}
+			$km=$trips['distance_in_km_from_web'].' KM';
+			$rtn=$trips['round_trip'];
 			if($trip_type_id==INSTANT_TRIP){
 			$td_for_array=$td_for_array*NEW_INSTANT_TRIP;
 			$response['td']=$td_for_array;
@@ -168,7 +170,7 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 			$time=explode(':',$trips['pick_up_time']);
 			$unixtime=mktime($time[0],$time[1],0,$dates[1],$dates[2],$dates[0])*1000;
 		
-			$response['nct']=array('fr'=>$from,'nid'=>$newtrips['id'],'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$to);
+			$response['nct']=array('fr'=>$from,'nid'=>$newtrips['id'],'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$to,'km'=>$km,'rtn'=>$rtn);
 			
 			}else if($trip_type_id==FUTURE_TRIP){
 			$td_for_array=$td_for_array*NEW_FUTURE_TRIP;
@@ -176,7 +178,7 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 			$dates=explode('-',$trips['pick_up_date']);
 			$time=explode(':',$trips['pick_up_time']);
 			$unixtime=mktime($time[0],$time[1],0,$dates[1],$dates[2],$dates[0])*1000;
-			$response['nft']=array('fr'=>$from,'nid'=>$newtrips['id'],'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$to);
+			$response['nft']=array('fr'=>$from,'nid'=>$newtrips['id'],'sec'=>$unixtime,'tid'=>$trips['id'],'to'=>$to,'km'=>$km,'rtn'=>$rtn);
 			
 					
 			}	
