@@ -61,9 +61,10 @@ $app->get('/validate-app', function() use ($app) {
 
 $app->get('/vehicle-loc-logs', function() use ($app) {
 	$app_key=$app->request()->get('app_id');
-	$lat=$app->request()->get('lt');
-	$lng=$app->request()->get('lg');
-	$td=$app->request()->get('td');
+	$lat  = $app->request()->get('lt');
+	$lng  = $app->request()->get('lg');
+	$td   = $app->request()->get('td');
+	$id	  =	$app->request()->get('tid');
 	//$response['res']=$app_key.' '.$lat.' '.$lng.' '.$td;
 	//add your class, if required
 	require_once dirname(__FILE__) . '/include/class/class_vehicle_location_log.php';
@@ -78,27 +79,38 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 	if($driver_exists!=false){
 		//$Notifications->logreponds($app_key,$tid='-1',$td,$_SERVER['QUERY_STRING']);
 	if($td==LOG_LOCATION){
-		$result=$VehicleLocLog->logLocation($app_key,$lat,$lng,gINVALID);
+		$result=$VehicleLocLog->logLocation($app_key,$lat,$lng,$id);
+		if($id>gINVALID){
+			$driver_status=DRIVER_STATUS_ENGAGED;
+			$Driver->changeStatus($app_key,$driver_status);
+		}
 	}else if($td==LOG_LOCATION_AND_TRIP_DETAILS){
 		
-		$trip_from_lat							=	$app->request()->get('lts');
-		$trip_from_lng							=	$app->request()->get('lgs');
-		$trip_to_lat							=	$app->request()->get('lte');
-		$dataArray['distance_in_km_from_app']	=	$app->request()->get('dt');
-		$trip_to_lng							=	$app->request()->get('lge');
-		$srt									=	$app->request()->get('srt')/1000;
-		$end									=	$app->request()->get('end')/1000;
-		$dataArray['trip_start_date_time']		=	date('Y-m-d H:i:s',$srt);
-		$dataArray['trip_end_date_time']		=	date('Y-m-d H:i:s',$end);
-		$dataArray['trip_status_id']			=	TRIP_STATUS_TRIP_COMPLETED;
-		$id										=	$app->request()->get('tid');
-		$driver_status							=	DRIVER_STATUS_ACTIVE;
+		//$trip_from_lat													=	$app->request()->get('lts');
+		//$trip_from_lng													=	$app->request()->get('lgs');
+		//$trip_to_lat														=	$app->request()->get('lte');
+		$dataArray['distance_in_km_from_app']		=	$app->request()->get('dt');
+		//$trip_to_lng														=	$app->request()->get('lge');
+		$srt																		=	$app->request()->get('srt')/1000;
+		$end																		=	$app->request()->get('end')/1000;
+		$dataArray['trip_start_date_time']			=	date('Y-m-d H:i:s',$srt);
+		$dataArray['trip_end_date_time']				=	date('Y-m-d H:i:s',$end);
+		$dataArray['trip_status_id']						=	TRIP_STATUS_TRIP_COMPLETED;
+		$tot																		= $app->request()->get('tot');
+		$driver_status													=	DRIVER_STATUS_ACTIVE;
+		
+		$trips=$Trip->getDetails($id);
 
+		if($tot < $trips['total_amount']){
+			$dataArray['total_amount']	= $trips['total_amount'];
+		}else{
+			$dataArray['total_amount']	= $tot;
+		}
 		$Trip->update($dataArray,$id);	
 		$Driver->changeStatus($app_key,$driver_status);		
 		
-		$VehicleLocLog->logLocation($app_key,$trip_from_lat,$trip_from_lng,$id);
-		$VehicleLocLog->logLocation($app_key,$trip_to_lat,$trip_to_lng,$id);
+		//$VehicleLocLog->logLocation($app_key,$trip_from_lat,$trip_from_lng,$id);
+		//$VehicleLocLog->logLocation($app_key,$trip_to_lat,$trip_to_lng,$id);
 		$VehicleLocLog->logLocation($app_key,$lat,$lng,gINVALID);
 	}
 
@@ -156,10 +168,14 @@ $app->get('/vehicle-loc-logs', function() use ($app) {
 			}else{
 			$from=$trips['trip_from'];
 			}
-			if(isset($trips['trip_to_landmark']) && $trips['trip_to_landmark']!=''){
-			$to=$trips['trip_to'].','.$trips['trip_to_landmark'];
-			}else{
-			$to=$trips['trip_to'];
+			if($trips['local_trip']=='f'){
+				if(isset($trips['trip_to_landmark']) && $trips['trip_to_landmark']!=''){
+				$to=$trips['trip_to'].','.$trips['trip_to_landmark'];
+				}else{
+				$to=$trips['trip_to'];
+				}
+			}else if($trips['local_trip']=='t'){
+				$to=$trips['trip_to'];
 			}
 			$km=$trips['distance_in_km_from_web'].' KM';
 			$rtn=$trips['round_trip'];
@@ -353,7 +369,7 @@ $app->get('/user-responds', function() use ($app) {
 	$app_key=$app->request()->get('app_id');
 	$trip_id=$app->request()->get('tid');
 	$notification_id=$app->request()->get('nid');
-	$amount=$app->request()->get('amt');
+	$amount=$app->request()->get('rate');
 	$ac=$app->request()->get('ac');
 	//add your class, if required
 	require_once dirname(__FILE__) . '/include/class/class_driver.php';
